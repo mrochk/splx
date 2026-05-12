@@ -30,6 +30,16 @@ def cxdb(x: Float[Array, ''], knots: Float[Array, 'k'], i: int, d: int) -> Float
 
     return left + right
 
+@jax.jit(static_argnames=('i', 'd'))
+@jaxtyped(typechecker=beartype)
+def dcxdb(x: Float[Array, ''], knots: Float[Array, 'k'], i: int, d: int) -> Float[Array, '']:
+    """Derivative of Cox-De-Boor"""
+    a = knots[i+d] - knots[i]
+    b = knots[i+d+1] - knots[i+1]
+    left = jnp.where(a != 0, d / jnp.where(a != 0, a, 1.0) * cxdb(x, knots, i, d-1), 0.0)
+    right = jnp.where(b != 0, d / jnp.where(b != 0, b, 1.0) * cxdb(x, knots, i+1, d-1), 0.0)
+    return left - right
+
 @jax.jit(static_argnames='d')
 @jaxtyped(typechecker=beartype)
 def repeat_knots(knots: Float[Array, 'k'], d: int) -> Float[Array, 'K']:
@@ -46,8 +56,20 @@ def design_matrix_row(x: Float[Array, ''], knots: Float[Array, 'k'], d: int) -> 
 
 @jax.jit(static_argnames='d')
 @jaxtyped(typechecker=beartype)
+def design_dmatrix_row(x: Float[Array, ''], knots: Float[Array, 'k'], d: int) -> Float[Array, 'n']:
+    x = jnp.where(x >= knots[-1], knots[-1] - 1e-6, x)
+    n_basis = len(knots) - d - 1
+    return jnp.stack([dcxdb(x, knots, i, d) for i in range(n_basis)])
+
+@jax.jit(static_argnames='d')
+@jaxtyped(typechecker=beartype)
 def design_matrix(x: Float[Array, 'N'], knots: Float[Array, 'k'], d: int) -> Float[Array, 'N n']:
     return jax.vmap(partial(design_matrix_row, knots=knots, d=d))(x)
+
+@jax.jit(static_argnames='d')
+@jaxtyped(typechecker=beartype)
+def design_dmatrix(x: Float[Array, 'N'], knots: Float[Array, 'k'], d: int) -> Float[Array, 'N n']:
+    return jax.vmap(partial(design_dmatrix_row, knots=knots, d=d))(x)
 
 @jax.jit(static_argnames='d')
 @jaxtyped(typechecker=beartype)
@@ -58,51 +80,12 @@ def fit_bspline_coefs(x: Float[Array, 'N'], y: Float[Array, 'N'], knots: Float[A
 
 @jax.jit(static_argnames='d')
 @jaxtyped(typechecker=beartype)
-def bspline_inference(x: Float[Array, ''], c: Float[Array, 'n'], knots: Float[Array, 'k'], d: int) -> Float[Array, '']:
-    return design_matrix_row(x, knots, d) @ c
-
-### cubic versions
-
-@jax.jit(static_argnames='i')
-@jaxtyped(typechecker=beartype)
-def cxdb3(x: Float[Array, ''], knots: Float[Array, 'k'], i: int) -> Float[Array, '']:
-    '''Cox-De-Boor (JIT Compatible)'''
-
-    a = knots[i+3] - knots[i]
-    b = knots[i+3+1] - knots[i+1]
-
-    left = jnp.where(a != 0, (x - knots[i]) / jnp.where(a != 0, a, 1.0) * cxdb(x, knots, i, 2), 0.0)
-    right = jnp.where(b != 0, (knots[i+3+1] - x) / jnp.where(b != 0, b, 1.0) * cxdb(x, knots, i+1, 2), 0.0)
-
-    return left + right
-
-@jax.jit
-@jaxtyped(typechecker=beartype)
-def repeat_knots3(knots: Float[Array, 'k']) -> Float[Array, 'k+6']:
-    left = jnp.repeat(knots[0], 3)
-    right = jnp.repeat(knots[-1], 3)
-    return jnp.concat([left, knots, right])
-
-@jax.jit
-@jaxtyped(typechecker=beartype)
-def design_matrix_row3(x: Float[Array, ''], knots: Float[Array, 'k']) -> Float[Array, 'n']:
-    x = jnp.where(x >= knots[-1], knots[-1] - 1e-6, x)
-    n_basis = len(knots) - 4
-    return jnp.stack([cxdb3(x, knots, i) for i in range(n_basis)])
-
-@jax.jit
-@jaxtyped(typechecker=beartype)
-def design_matrix3(x: Float[Array, 'N'], knots: Float[Array, 'k']) -> Float[Array, 'N n']:
-    return jax.vmap(partial(design_matrix_row3, knots=knots))(x)
-
-@jax.jit
-@jaxtyped(typechecker=beartype)
-def fit_bspline_coefs3(x: Float[Array, 'N'], y: Float[Array, 'N'], knots: Float[Array, 'k']) -> Float[Array, 'n']:
-    B = design_matrix3(x, knots)
+def fit_bspline_dcoefs(x: Float[Array, 'N'], y: Float[Array, 'N'], knots: Float[Array, 'k'], d: int) -> Float[Array, 'n']:
+    B = design_dmatrix(x, knots, d)
     c = jnp.linalg.lstsq(B, y)[0]
     return c
 
-@jax.jit
+@jax.jit(static_argnames='d')
 @jaxtyped(typechecker=beartype)
-def bspline_inference3(x: Float[Array, ''], c: Float[Array, 'n'], knots: Float[Array, 'k']) -> Float[Array, '']:
-    return design_matrix_row3(x, knots) @ c
+def bspline_inference(x: Float[Array, ''], c: Float[Array, 'n'], knots: Float[Array, 'k'], d: int) -> Float[Array, '']:
+    return design_matrix_row(x, knots, d) @ c
