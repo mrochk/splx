@@ -1,0 +1,11 @@
+[project]
+name = "splx"
+version = "0.1.0"
+description = "Splines in Jax."
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "beartype>=0.22.9",
+    "jax>=0.10.0",
+    "jaxtyping>=0.3.9",
+]
