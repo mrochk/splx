@@ -1,7 +1,7 @@
 [project]
-name = "splx"
+name = "bsplx"
 version = "0.1.0"
-description = "Splines in Jax."
+description = "B-splines in Jax."
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [

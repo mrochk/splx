@@ -1,5 +1,5 @@
 import jax, jax.numpy as jnp
-from splx.bspline import *
+from bsplx.bspline import *
 
 def f(x): return jnp.cos(4*jnp.pi*x)
 
@@ -9,12 +9,12 @@ def main():
         x = jnp.linspace(0, 1)
         y = f(x)
 
-        knots = repeat_knots3(jnp.linspace(0, 1, 40))
+        knots = repeat_knots(jnp.linspace(0, 1, 40), 3)
         print(knots)
 
-        B = design_matrix3(x, knots)
+        B = design_matrix(x, knots, 3)
 
-        c = fit_bspline_coefs3(x, y, knots)
+        c = fit_bspline_coefs(x, y, knots, 3)
 
         inf = B @ c
         print(y)

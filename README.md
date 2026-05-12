@@ -1,2 +1,2 @@
-# splx
-Splines in Jax.
+# bsplx
+B-splines in Jax.
