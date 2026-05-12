@@ -1,2 +1,3 @@
 # bsplx
-B-splines in Jax.
+
+A simple B-splines implementation in (JIT-compatible) Jax.

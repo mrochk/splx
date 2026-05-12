@@ -1,5 +1,5 @@
 import jax, jax.numpy as jnp
-from bsplx.bspline import *
+from bsplx import *
 
 def f(x): return jnp.cos(4*jnp.pi*x)
 
