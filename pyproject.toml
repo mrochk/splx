@@ -1,11 +1,26 @@
 [project]
 name = "bsplx"
-version = "0.1.0"
-description = "A simple B-splines implementation in (JIT-compatible) Jax."
+version = "0.1.1"
+description = "A minimal B-spline implementation in (JIT-compatible) Jax."
 readme = "README.md"
 requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [
+  { name = "Maxime Rochkoulets", email = "mrochkoulets@gmail.com" }
+]
 dependencies = [
     "beartype>=0.22.9",
     "jax>=0.10.0",
     "jaxtyping>=0.3.9",
 ]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+]
+[project.urls]
+Repository = "https://github.com/mrochk/bsplx"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

@@ -1,3 +1,8 @@
 # bsplx
 
-A simple B-splines implementation in (JIT-compatible) Jax.
+A minimal B-spline implementation in (JIT-compatible) Jax.
+
+### Usage
+```
+pip install bsplx
+```
